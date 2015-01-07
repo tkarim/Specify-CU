@@ -28,7 +28,7 @@ $success_count = 0;
 $bad_date = date('Y-m-d', strtotime('1970-01-01'));
 
 $sql = <<<EOSQL
-SELECT CollectionObjectID, Name 
+SELECT CollectionObjectID, Name, CatalogedDateVerbatim 
 FROM collectionobject
 WHERE Name IS NOT NULL
 EOSQL;
@@ -39,15 +39,33 @@ error_log('row count: '.count($result));
 foreach($result as $row) {
 
     //one off fix for 2 digit years
-    if('5/28/04' === $row['Name']) { $row['Name'] = "2004May28"; }
-    if('9/7/04' === $row['Name']) { $row['Name'] = "2004Sep07"; }
-
+    $one_off = FALSE;
+    if('5/28/04' === $row['Name']) { $row['Name'] = "2004May28"; $one_off = TRUE; }
+    if('9/7/04' === $row['Name']) { $row['Name'] = "2004Sep07"; $one_off = TRUE; }
+    if('1928 - Sept.' === $row['Name']) { $row['Name'] = "1928Sep"; $one_off = TRUE; }
+    if('1992June27' === $row['Name']) { $row['Name'] = "1992Jun27"; $one_off = TRUE; }
+    if('S1985Sep' === $row['Name']) { $row['Name'] = "1985Sep"; $one_off = TRUE; }
 
     /* Simple Attempt -- Does the string conver to our date format already? */
     $new_date = date('Y-m-d', strtotime($row['Name']));
-    if($new_date && $new_date !== $bad_date) {
-        update($new_date, $row['CollectionObjectID']);
-        $success_count++;
+
+    if( ($new_date && $new_date !== $bad_date) && !$one_off) {
+
+        // Regex for partial dates
+        $year_result       = preg_match('/^\d\d\d\d-00-00/', $row['CatalogedDateVerbatim']);
+        $year_month_result = preg_match('/^\d\d\d\d-(\d)?\d-00/', $row['CatalogedDateVerbatim']); 
+
+        error_log('new date: '.$new_date);
+        error_log('regex?: '.$year_result.' - '.$year_month_result);
+
+
+        if(1 === $year_result || 1 === $year_month_result) {
+            unset_catalog_date($row['CollectionObjectID']);
+        } else {
+            update($new_date, $row['CollectionObjectID']);
+            $success_count++;
+        }
+
         continue;
     }
 
@@ -93,8 +111,8 @@ foreach($result as $row) {
                 $year  = substr($row['Name'], 0, 4);
                 $month = substr($row['Name'], 4, 3);           
                 $date_month = date('m', strtotime($month));
-               
                 $partial_date = $year."-".$date_month."-00";
+
             } else if (strlen($row['Name']) == 4) {
                $partial_date = $row['Name']."-00-00";
             } else {
@@ -116,6 +134,19 @@ function update($new_date, $object_id) {
 
     $update_sql = <<<EOSQL
 UPDATE collectionobject SET CatalogedDate = '{$new_date}' WHERE CollectionObjectID = {$object_id}
+EOSQL;
+
+    $update_result = mysql_db::query($update_sql, true);
+    if(!empty($update_result)) {
+        error_log(print_r($update_result,1));
+        die();
+    }
+}
+
+function unset_catalog_date($object_id) {
+
+    $update_sql = <<<EOSQL
+UPDATE collectionobject SET CatalogedDate = NULL WHERE CollectionObjectID = {$object_id}
 EOSQL;
 
     $update_result = mysql_db::query($update_sql, true);
