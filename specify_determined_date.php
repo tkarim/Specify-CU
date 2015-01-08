@@ -53,7 +53,13 @@ foreach($result as $row) {
     if('1.26.2012'  === $row['Text1']) { $row['Text1'] = '2012-01-26'; $one_off = true; }
     if('1.31.11'    === $row['Text1']) { $row['Text1'] = '2011-01-31'; $one_off = true; }
     if('10.13.2011' === $row['Text1']) { $row['Text1'] = '2011-10-13'; $one_off = true; }
-    
+    if('6.10.12'    === $row['Text1']) { $row['Text1'] = '2012-06-10'; $one_off = true; }
+    if('7.2.12'     === $row['Text1']) { $row['Text1'] = '2012-07-02'; $one_off = true; }
+    if('7.6.12'     === $row['Text1']) { $row['Text1'] = '2012-07-06'; $one_off = true; }
+    if('7.10.12'    === $row['Text1']) { $row['Text1'] = '2012-07-12'; $one_off = true; }
+    if('8.2.12'     === $row['Text1']) { $row['Text1'] = '2012-08-02'; $one_off = true; }
+    if('8.6.12'     === $row['Text1']) { $row['Text1'] = '2012-08-06'; $one_off = true; }
+    if('5.1.12'     === $row['Text1']) { $row['Text1'] = '2012-05-01'; $one_off = true; }    
 
     $row['Text1'] = str_replace(array(' ', '.'), '-', $row['Text1']);
     
